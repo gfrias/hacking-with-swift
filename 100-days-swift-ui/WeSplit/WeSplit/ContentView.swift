@@ -55,7 +55,7 @@ struct ContentView: View {
                     Text("$\(totalPerPerson, specifier:"%.2f")")
                 }
                 Section(header: Text("Total amount")) {
-                    Text("$\(totalAmount, specifier:"%.2f")")
+                    Text("$\(totalAmount, specifier:"%.2f")").foregroundColor(self.tipPercentages[tipPercentage] < 10 ? .red: .primary)
                 }
             }.navigationTitle("We Split")
         }
