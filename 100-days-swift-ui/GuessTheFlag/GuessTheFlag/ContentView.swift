@@ -12,6 +12,8 @@ struct ContentView: View {
     
     @State private var correctAnswer = Int.random(in:0...2)
     
+    @State private var selectedAnswer: Int?
+    
     @State private var showingScore = false
     @State private var scoreTitle = ""
     
@@ -36,9 +38,13 @@ struct ContentView: View {
                 VStack(spacing:20){
                     ForEach(0 ..< 3) { number in
                         Button(action: {
-                            self.flagTapped(number)
+                            if selectedAnswer == nil {
+                                self.flagTapped(number)
+                            }
                         }) {
-                            FlagImage(country: self.countries[number])
+                            FlagImage(country: self.countries[number], selectedAnswer: selectedAnswer,
+                                      correctAnswer: correctAnswer,
+                                      number: number)
                         }
                     }
                 }
@@ -53,18 +59,27 @@ struct ContentView: View {
     }
     
     func flagTapped(_ number: Int) {
+        withAnimation {
+            selectedAnswer = number
+        }
+        
         if number == correctAnswer {
             scoreTitle = "Correct"
             score += 1
+            showingScore = true
         } else {
             scoreTitle = "Wrong, that is the flag of \(countries[number])"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                showingScore = true
+            }
         }
-        showingScore = true
+        
     }
     
     func askQuestion() {
         countries = countries.shuffled()
         correctAnswer = Int.random(in: 0...2)
+        self.selectedAnswer = nil
     }
 }
 
@@ -76,9 +91,35 @@ struct ContentView_Previews: PreviewProvider {
 
 struct FlagImage: View {
     var country: String
+    var selectedAnswer: Int?
+    var correctAnswer: Int
+    var number: Int
     
     var body: some View {
-        Image(self.country).renderingMode(.original).clipShape(Capsule())
-            .overlay(Capsule().stroke(Color.black, lineWidth: 1)).shadow(color:. black, radius: 2)
+        ZStack {
+            Image(self.country).renderingMode(.original).clipShape(Capsule())
+                .overlay(Capsule().stroke(Color.black, lineWidth: 1)).shadow(color:. black, radius: 2).opacity(isForeground ? 1: 0.25)
+            if isTapped && !isRight {
+                Image(systemName: "xmark.circle.fill").font(/*@START_MENU_TOKEN@*/.title/*@END_MENU_TOKEN@*/.weight(.heavy)).accentColor(.red)
+            }
+        }.rotationEffect(isTapped && isRight ? .degrees(360) : .zero)
+        .rotationEffect(isTapped && !isRight ? .degrees(-360) : .zero)
+        
     }
+    
+    var isForeground: Bool {
+        if let _ = selectedAnswer {
+            return number == correctAnswer
+        }
+        return true
+    }
+    
+    var isTapped: Bool {
+        selectedAnswer == number
+    }
+    
+    var isRight: Bool {
+        selectedAnswer == correctAnswer
+    }
+    
 }
